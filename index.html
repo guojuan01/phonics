@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="拼读打卡">
+<meta name="theme-color" content="#ff8a5c">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23ff8a5c'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href='data:application/manifest+json,{"name":"字母拼读每日打卡","short_name":"拼读打卡","start_url":".","display":"standalone","background_color":"%23fdf6ec","theme_color":"%23ff8a5c","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%23ff8a5c%27/%3E%3Ctext x=%2750%27 y=%2768%27 font-size=%2752%27 text-anchor=%27middle%27 fill=%27white%27%3EA%3C/text%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml"}]}'>
+
+<title>字母拼读每日打卡</title>
+<style>
+:root{
+  --bg:#fdf6ec; --card:#fff; --main:#ff8a5c; --main-d:#f2703f;
+  --green:#5cb85c; --blue:#5b9bd5; --text:#4a3b32; --muted:#a89a8e;
+  --gold:#f5b942; --shadow:0 4px 16px rgba(200,150,100,.18);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:520px;margin:0 auto;padding-bottom:40px}
+header{background:linear-gradient(135deg,#ffb347,#ff8a5c);color:#fff;padding:22px 18px 18px;border-radius:0 0 24px 24px;box-shadow:var(--shadow)}
+header h1{font-size:22px;display:flex;align-items:center;gap:8px}
+header p{font-size:13px;opacity:.9;margin-top:4px}
+.stats{display:flex;gap:10px;margin-top:14px}
+.stat{flex:1;background:rgba(255,255,255,.22);border-radius:12px;padding:8px;text-align:center;backdrop-filter:blur(4px)}
+.stat b{font-size:20px;display:block}
+.stat span{font-size:11px;opacity:.9}
+nav{display:flex;margin:14px 12px 0;background:#fff;border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+nav button{flex:1;border:none;background:none;padding:12px 0;font-size:15px;color:var(--muted);font-weight:600;transition:.2s}
+nav button.active{background:var(--main);color:#fff;border-radius:14px}
+.page{display:none;padding:14px 12px}
+.page.show{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+/* 今日任务 */
+.day-head{text-align:center;margin-bottom:6px}
+.day-label{font-size:13px;color:var(--muted)}
+.big-letter{font-size:84px;font-weight:800;color:var(--main);line-height:1;font-family:'Arial Rounded MT Bold',Arial,sans-serif}
+.big-letter.lower{color:var(--blue)}
+.sound{font-size:18px;color:var(--text);margin:6px 0 2px}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:700;color:#fff;background:var(--main);box-shadow:0 4px 12px rgba(255,138,92,.4);cursor:pointer;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:#fff;color:var(--main);border:2px solid var(--main);box-shadow:none}
+.btn.green{background:var(--green);box-shadow:0 4px 12px rgba(92,184,92,.4)}
+.btn:disabled{background:#ddd;color:#999;box-shadow:none}
+.word-item{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px dashed #f0e4d8}
+.word-item:last-child{border-bottom:none}
+.w-emoji{width:38px;height:38px;border-radius:10px;background:#fff3e8;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.w-main{flex:1;min-width:0}
+.w-word{font-size:16px;font-weight:700}
+.w-ipa{font-size:12px;color:var(--blue);font-family:Georgia,serif}
+.w-zh{font-size:12px;color:var(--muted)}
+
+.rec{border:none;background:#e57373;color:#fff;width:32px;height:32px;border-radius:50%;font-size:13px;cursor:pointer;flex-shrink:0}
+.rec.recording{animation:pulse 1s infinite;background:#d32f2f}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.rec.has-rec{background:var(--green)}
+.play-rec{border:none;background:#9c6ade;color:#fff;width:32px;height:32px;border-radius:50%;font-size:13px;cursor:pointer;flex-shrink:0}
+.rec-tip{font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
+.speak{border:none;background:var(--blue);color:#fff;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;flex-shrink:0}
+.progress-ring{width:64px;height:64px;margin:0 auto}
+/* 日历 */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.cal-cell{aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:15px;font-weight:700;background:#f6ede2;color:var(--muted);position:relative}
+.cal-cell .zh{font-size:9px;font-weight:400}
+.cal-cell.done{background:var(--green);color:#fff}
+.cal-cell.today{outline:3px solid var(--gold);outline-offset:1px}
+.cal-cell.week{background:var(--gold);color:#fff}
+.week-banner{background:linear-gradient(135deg,#f5b942,#f59e2c);color:#fff;border-radius:16px;padding:18px;text-align:center;margin-bottom:12px;box-shadow:var(--shadow)}
+.week-banner h2{font-size:18px;margin-bottom:4px}
+/* 周测 */
+.quiz-q{font-size:20px;text-align:center;margin:10px 0}
+.quiz-word{font-size:40px;font-weight:800;color:var(--main);font-family:'Arial Rounded MT Bold',Arial}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.opt{background:#fff;border:2px solid #f0e4d8;border-radius:12px;padding:14px 8px;font-size:15px;text-align:center;cursor:pointer;transition:.15s}
+.opt:active{transform:scale(.97)}
+.opt.correct{border-color:var(--green);background:#eaf7ea}
+.opt.wrong{border-color:#e57373;background:#fdecec}
+.quiz-bar{height:8px;background:#f0e4d8;border-radius:4px;overflow:hidden;margin-bottom:14px}
+.quiz-bar div{height:100%;background:var(--main);border-radius:4px;transition:.3s}
+.score-big{font-size:56px;font-weight:800;text-align:center;color:var(--main)}
+.stars{font-size:36px;text-align:center;margin:6px 0}
+.badge-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.badge{background:#fff3e8;border-radius:10px;padding:6px 10px;font-size:12px}
+.star-row{display:flex;align-items:center;gap:6px;font-size:15px}
+.toast{position:fixed;left:50%;bottom:60px;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1}
+.confetti{position:fixed;top:-10px;font-size:20px;animation:fall 2.5s linear forwards;z-index:98;pointer-events:none}
+@keyframes fall{to{transform:translateY(105vh) rotate(360deg);opacity:.6}}
+.sub{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+h3.sec{font-size:15px;margin:4px 0 10px;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+    <select id="user-select" style="max-width:60%;padding:6px 10px;border-radius:10px;border:none;font-size:14px;font-weight:600;background:rgba(255,255,255,.9);color:#7a4a2b"></select>
+    <div style="display:flex;gap:6px">
+      <button id="btn-add-user" style="border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;background:rgba(255,255,255,.35);color:#fff">＋ 新用户</button>
+      <button id="btn-del-user" style="border:none;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600;background:rgba(255,255,255,.35);color:#fff">删除</button>
+    </div>
+  </div>
+  <h1>🌟 字母拼读每日打卡</h1>
+  <p>每天一个字母 · 自然拼读启蒙 · 每周周测复习</p>
+  <div class="stats">
+    <div class="stat"><b id="st-done">0</b><span>已学字母</span></div>
+    <div class="stat"><b id="st-streak">0</b><span>连续打卡</span></div>
+    <div class="stat"><b id="st-words">0</b><span>掌握单词</span></div>
+    <div class="stat"><b id="st-stars">⭐0</b><span>周测星星</span></div>
+  </div>
+</header>
+<nav>
+  <button class="active" data-p="today">📖 今日</button>
+  <button data-p="cal">📅 日历</button>
+  <button data-p="quiz">📝 周测</button>
+</nav>
+
+<div class="page show" id="p-today">
+  <div class="card" style="text-align:center">
+    <div class="day-label" id="day-label"></div>
+    <div class="big-letter" id="big-letter">A</div>
+    <div class="big-letter lower" id="big-letter-lower" style="font-size:56px">a</div>
+    <div class="sound" id="letter-sound"></div>
+    <div class="sub" id="today-status"></div>
+    <button class="btn" id="btn-start" style="margin-top:12px">开始学习 ▶</button>
+  </div>
+  <div class="card" id="learn-area" style="display:none">
+    <h3 class="sec">🔤 <span id="learn-title"></span></h3>
+    <div id="word-list"></div>
+    <div class="rec-tip">🎤 点录音键会先播放原音，然后开始录音；再点一次结束。▶ 播放自己的录音跟原音对比</div>
+    <button class="btn green" id="btn-finish" style="margin-top:14px">✅ 完成今日打卡</button>
+  </div>
+  <div class="card" id="done-card" style="display:none;text-align:center">
+    <div style="font-size:44px">🎉</div>
+    <div style="font-weight:700;font-size:17px;margin:6px 0">今日打卡完成！</div>
+    <div class="sub">明天继续解锁下一个字母吧～</div>
+  </div>
+</div>
+
+<div class="page" id="p-cal">
+  <div class="card">
+    <h3 class="sec">🗓 学习日历（26天行程）</h3>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="sub">🟩 已完成 · 🟨 周测日 · ⬜ 未开始</div>
+  </div>
+</div>
+
+<div class="page" id="p-quiz">
+  <div id="quiz-lock" class="card" style="text-align:center;display:none">
+    <div style="font-size:40px">🔒</div>
+    <div style="font-weight:700;margin:8px 0">周测还未解锁</div>
+    <div class="sub" id="quiz-lock-reason"></div>
+  </div>
+  <div id="quiz-run" style="display:none">
+    <div class="quiz-bar"><div id="quiz-prog" style="width:0%"></div></div>
+    <div class="card">
+      <div class="quiz-q" id="quiz-q"></div>
+      <div class="quiz-word" id="quiz-word"></div>
+      <div class="quiz-opts" id="quiz-opts"></div>
+      <div class="sub">听发音选释义 / 看词选释义</div>
+    </div>
+  </div>
+  <div id="quiz-result" class="card" style="display:none;text-align:center">
+    <div class="score-big" id="quiz-score"></div>
+    <div class="stars" id="quiz-stars"></div>
+    <div class="sub" id="quiz-comment"></div>
+    <div class="badge-row" id="quiz-badges"></div>
+    <button class="btn ghost" id="btn-quiz-back" style="margin-top:14px">返回继续学习</button>
+  </div>
+</div>
+
+
+<div id="user-gate" style="display:none;position:fixed;inset:0;background:rgba(60,40,25,.55);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:20px;padding:24px;max-width:360px;width:100%;text-align:center">
+    <div style="font-size:40px">👶</div>
+    <div style="font-weight:800;font-size:18px;margin:8px 0 4px">谁在学习？</div>
+    <div class="sub" style="margin-bottom:14px">每个孩子一个专属档案，进度独立保存</div>
+    <div id="gate-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px">
+      <input id="gate-name" placeholder="输入新用户名字" style="flex:1;padding:12px;border:2px solid #f0e4d8;border-radius:12px;font-size:15px">
+      <button id="gate-create" style="border:none;border-radius:12px;padding:0 18px;font-weight:700;color:#fff;background:var(--main);font-size:15px">创建</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const DATA = {"a":{"sound":"æ","words":[{"w":"ax","ipa":"æks","zh":"斧头"},{"w":"add","ipa":"æd","zh":"加"},{"w":"actor","ipa":"ˈæktər","zh":"演员"},{"w":"angry","ipa":"ˈæŋɡri","zh":"愤怒"},{"w":"ankle","ipa":"ˈæŋkl","zh":"踝"},{"w":"apple","ipa":"ˈæpl","zh":"苹果"},{"w":"arrow","ipa":"ˈæroʊ","zh":"箭头"},{"w":"animal","ipa":"ˈænɪml","zh":"动物"},{"w":"answer","ipa":"ˈænsər","zh":"回答"},{"w":"actress","ipa":"ˈæktrəs","zh":"女演员"},{"w":"athlete","ipa":"ˈæθliːt","zh":"运动员"},{"w":"avocado","ipa":"ˌævəˈkɑdoʊ","zh":"牛油果"},{"w":"ambulance","ipa":"ˈæmbjələns","zh":"救护车"},{"w":"astronaut","ipa":"ˈæstrənɔːt","zh":"宇航员"}]},"b":{"sound":"b","words":[{"w":"bad","ipa":"bæd","zh":"坏"},{"w":"bag","ipa":"bæɡ","zh":"袋"},{"w":"bed","ipa":"bed","zh":"床"},{"w":"bee","ipa":"biː","zh":"蜜蜂"},{"w":"bean","ipa":"biːn","zh":"豆角"},{"w":"bird","ipa":"bɜːrd","zh":"鸟"},{"w":"boat","ipa":"boʊt","zh":"小船"},{"w":"body","ipa":"ˈbɑːdi","zh":"身体"},{"w":"book","ipa":"bʊk","zh":"书"},{"w":"bowl","ipa":"boʊl","zh":"碗"},{"w":"bench","ipa":"bentʃ","zh":"长凳"},{"w":"black","ipa":"blæk","zh":"黑色"},{"w":"bread","ipa":"bred","zh":"面包"},{"w":"bunny","ipa":"ˈbʌni","zh":"小兔子"},{"w":"bottle","ipa":"ˈbɑːtl","zh":"瓶子"},{"w":"button","ipa":"ˈbʌtn","zh":"纽扣"}]},"c":{"sound":"k","words":[{"w":"car","ipa":"kɑːr","zh":"小轿车"},{"w":"cat","ipa":"kæt","zh":"猫"},{"w":"cow","ipa":"kaʊ","zh":"牛"},{"w":"cup","ipa":"kʌp","zh":"杯子"},{"w":"cake","ipa":"keɪk","zh":"蛋糕"},{"w":"call","ipa":"kɔːl","zh":"打电话"},{"w":"card","ipa":"kɑːrd","zh":"卡"},{"w":"coat","ipa":"koʊt","zh":"外套"},{"w":"cook","ipa":"kʊk","zh":"做饭"},{"w":"crab","ipa":"kræb","zh":"螃蟹"},{"w":"candy","ipa":"ˈkændi","zh":"糖果"},{"w":"close","ipa":"kloʊz","zh":"关"},{"w":"cloud","ipa":"klaʊd","zh":"云朵"},{"w":"carrot","ipa":"ˈkærət","zh":"胡萝卜"},{"w":"coffee","ipa":"ˈkɔːfi","zh":"咖啡"},{"w":"cotton","ipa":"ˈkɑːtn","zh":"棉"},{"w":"crayon","ipa":"ˈkreɪən","zh":"蜡笔"}]},"d":{"sound":"d","words":[{"w":"dad","ipa":"dæd","zh":"爸"},{"w":"dig","ipa":"dɪɡ","zh":"挖"},{"w":"dog","ipa":"dɔːɡ","zh":"狗"},{"w":"desk","ipa":"desk","zh":"书桌"},{"w":"dive","ipa":"daɪv","zh":"潜水"},{"w":"doll","ipa":"dɑːl","zh":"玩偶"},{"w":"door","ipa":"dɔːr","zh":"门"},{"w":"dove","ipa":"doʊv","zh":"鸽子"},{"w":"down","ipa":"daʊn","zh":"下"},{"w":"duck","ipa":"dʌk","zh":"小鸭"},{"w":"dirty","ipa":"ˈdɜːrti","zh":"脏"},{"w":"drive","ipa":"draɪv","zh":"驾驶"},{"w":"dinner","ipa":"ˈdɪnər","zh":"晚餐"},{"w":"doctor","ipa":"ˈdɑːktər","zh":"医生"},{"w":"donkey","ipa":"ˈdɑːŋki","zh":"驴"},{"w":"dragon","ipa":"ˈdræɡən","zh":"龙"}]},"e":{"sound":"e","words":[{"w":"bed","ipa":"bed","zh":"床"},{"w":"egg","ipa":"eɡ","zh":"鸡蛋"},{"w":"leg","ipa":"leɡ","zh":"腿"},{"w":"pen","ipa":"pen","zh":"钢笔"},{"w":"pet","ipa":"pet","zh":"宠物"},{"w":"red","ipa":"red","zh":"红色"},{"w":"ten","ipa":"ten","zh":"十"},{"w":"web","ipa":"web","zh":"网络"},{"w":"wet","ipa":"wet","zh":"湿"},{"w":"bell","ipa":"bel","zh":"铃"},{"w":"nest","ipa":"nest","zh":"巢"},{"w":"test","ipa":"test","zh":"测试"},{"w":"west","ipa":"west","zh":"西方"},{"w":"second","ipa":"ˈsekənd","zh":"第二"},{"w":"eggplant","ipa":"ˈeɡplænt","zh":"茄子"},{"w":"elephant","ipa":"ˈelɪfənt","zh":"大象"},{"w":"everyone","ipa":"ˈevriwʌn","zh":"每人"}]},"f":{"sound":"f","words":[{"w":"fan","ipa":"fæn","zh":"风扇"},{"w":"fox","ipa":"fɑːks","zh":"狐狸"},{"w":"face","ipa":"feɪs","zh":"脸"},{"w":"film","ipa":"fɪlm","zh":"电影"},{"w":"fish","ipa":"fɪʃ","zh":"鱼"},{"w":"five","ipa":"faɪv","zh":"五"},{"w":"four","ipa":"fɔːr","zh":"四"},{"w":"frog","ipa":"frɑːɡ","zh":"青蛙"},{"w":"fifty","ipa":"ˈfɪfti","zh":"五十"},{"w":"floor","ipa":"flɔːr","zh":"地板"},{"w":"forty","ipa":"ˈfɔːrti","zh":"四十"},{"w":"fruit","ipa":"fruːt","zh":"水果"},{"w":"family","ipa":"ˈfæməli","zh":"家庭"},{"w":"finger","ipa":"ˈfɪŋɡər","zh":"手指"},{"w":"flower","ipa":"ˈflaʊər","zh":"花"},{"w":"fifteen","ipa":"ˌfɪfˈtiːn","zh":"十五"},{"w":"football","ipa":"ˈfʊtbɔːl","zh":"足球"}]},"g":{"sound":"g","words":[{"w":"gas","ipa":"ɡæs","zh":"气体"},{"w":"game","ipa":"ɡeɪm","zh":"游戏"},{"w":"gate","ipa":"ɡeɪt","zh":"门"},{"w":"gift","ipa":"ɡɪft","zh":"礼品"},{"w":"girl","ipa":"ɡɜːrl","zh":"女孩"},{"w":"glue","ipa":"ɡluː","zh":"胶"},{"w":"goat","ipa":"ɡoʊt","zh":"山羊"},{"w":"gold","ipa":"ɡoʊld","zh":"金"},{"w":"good","ipa":"ɡʊd","zh":"好"},{"w":"glove","ipa":"ɡlʌv","zh":"手套"},{"w":"goose","ipa":"ɡuːs","zh":"鹅"},{"w":"grape","ipa":"ɡreɪp","zh":"葡萄"},{"w":"grass","ipa":"ɡræs","zh":"草"},{"w":"great","ipa":"ɡreɪt","zh":"很棒"},{"w":"green","ipa":"ɡriːn","zh":"绿色"}]},"h":{"sound":"h","words":[{"w":"hat","ipa":"hæt","zh":"帽子"},{"w":"hot","ipa":"hɑːt","zh":"热"},{"w":"hair","ipa":"her","zh":"头发"},{"w":"hall","ipa":"hɔːl","zh":"大厅"},{"w":"hand","ipa":"hænd","zh":"手"},{"w":"head","ipa":"hed","zh":"脑袋"},{"w":"hole","ipa":"hoʊl","zh":"孔"},{"w":"home","ipa":"hoʊm","zh":"家"},{"w":"happy","ipa":"ˈhæpi","zh":"快乐"},{"w":"heart","ipa":"hɑːrt","zh":"心形"},{"w":"horse","ipa":"hɔːrs","zh":"马"},{"w":"hotel","ipa":"hoʊˈtel","zh":"旅馆"},{"w":"house","ipa":"haʊs","zh":"屋"},{"w":"history","ipa":"ˈhɪstri","zh":"历史"},{"w":"hospital","ipa":"ˈhɑːspɪtl","zh":"医院"},{"w":"helicopter","ipa":"ˈhelɪkɑːptər","zh":"直升机"}]},"i":{"sound":"ɪ","words":[{"w":"big","ipa":"bɪɡ","zh":"大"},{"w":"dig","ipa":"dɪɡ","zh":"挖"},{"w":"fix","ipa":"fɪks","zh":"维修"},{"w":"hit","ipa":"hɪt","zh":"击中"},{"w":"ill","ipa":"ɪl","zh":"生病"},{"w":"kid","ipa":"kɪd","zh":"小子"},{"w":"pig","ipa":"pɪɡ","zh":"猪"},{"w":"sit","ipa":"sɪt","zh":"坐"},{"w":"city","ipa":"ˈsɪti","zh":"城市"},{"w":"fish","ipa":"fɪʃ","zh":"鱼"},{"w":"gift","ipa":"ɡɪft","zh":"礼品"},{"w":"give","ipa":"ɡɪv","zh":"送给"},{"w":"hill","ipa":"hɪl","zh":"小山"},{"w":"kiss","ipa":"kɪs","zh":"亲吻"},{"w":"skip","ipa":"skɪp","zh":"跳跃"},{"w":"trip","ipa":"trɪp","zh":"旅行"},{"w":"little","ipa":"ˈlɪtl","zh":"小"}]},"j":{"sound":"dʒ","words":[{"w":"jet","ipa":"dʒet","zh":"喷射"},{"w":"job","ipa":"dʒɑːb","zh":"工作"},{"w":"join","ipa":"dʒɔɪn","zh":"加入"},{"w":"jump","ipa":"dʒʌmp","zh":"跳"},{"w":"Japan","ipa":"dʒə'pæn","zh":"日本"},{"w":"judge","ipa":"dʒʌdʒ","zh":"法官"},{"w":"juice","ipa":"dʒuːs","zh":"果汁"},{"w":"juicy","ipa":"ˈdʒuːsi","zh":"多汁的"},{"w":"jacket","ipa":"ˈdʒækɪt","zh":"夹克"},{"w":"jungle","ipa":"ˈdʒʌŋɡl","zh":"丛林"},{"w":"journey","ipa":"ˈdʒɜːrni","zh":"旅程"},{"w":"jellyfish","ipa":"ˈdʒelifɪʃ","zh":"海蜇"}]},"k":{"sound":"k","words":[{"w":"key","ipa":"kiː","zh":"钥匙"},{"w":"kid","ipa":"kɪd","zh":"小子"},{"w":"book","ipa":"bʊk","zh":"书"},{"w":"cook","ipa":"kʊk","zh":"做饭"},{"w":"desk","ipa":"desk","zh":"书桌"},{"w":"duck","ipa":"dʌk","zh":"小鸭"},{"w":"kick","ipa":"kɪk","zh":"踢"},{"w":"king","ipa":"kɪŋ","zh":"国王"},{"w":"kiss","ipa":"kɪs","zh":"亲吻"},{"w":"kite","ipa":"kaɪt","zh":"风筝"},{"w":"milk","ipa":"mɪlk","zh":"牛奶"},{"w":"park","ipa":"pɑːrk","zh":"公园"},{"w":"pink","ipa":"pɪŋk","zh":"粉色"},{"w":"talk","ipa":"tɔːk","zh":"谈论"},{"w":"walk","ipa":"wɔːk","zh":"步行"},{"w":"jacket","ipa":"ˈdʒækɪt","zh":"夹克"},{"w":"kitten","ipa":"ˈkɪtn","zh":"小猫咪"}]},"l":{"sound":"l","words":[{"w":"blue","ipa":"bluː","zh":"蓝色"},{"w":"glue","ipa":"ɡluː","zh":"胶"},{"w":"lake","ipa":"leɪk","zh":"湖"},{"w":"lamp","ipa":"læmp","zh":"灯"},{"w":"leaf","ipa":"liːf","zh":"叶"},{"w":"like","ipa":"laɪk","zh":"喜欢"},{"w":"lion","ipa":"ˈlaɪən","zh":"狮子"},{"w":"look","ipa":"lʊk","zh":"看"},{"w":"loud","ipa":"laʊd","zh":"大声"},{"w":"luck","ipa":"lʌk","zh":"运气"},{"w":"slice","ipa":"slaɪs","zh":"切片"},{"w":"ladder","ipa":"ˈlædər","zh":"阶梯"},{"w":"little","ipa":"ˈlɪtl","zh":"小"},{"w":"lizard","ipa":"ˈlɪzərd","zh":"蜥蜴"},{"w":"police","ipa":"pəˈliːs","zh":"警察"},{"w":"airplane","ipa":"ˈerpleɪn","zh":"飞机"},{"w":"bowl","ipa":"boʊl","zh":"碗"},{"w":"girl","ipa":"ɡɜːrl","zh":"女孩"},{"w":"gold","ipa":"ɡoʊld","zh":"金"},{"w":"golf","ipa":"ɡɑːlf","zh":"高尔夫球"},{"w":"salt","ipa":"sɔːlt","zh":"盐"},{"w":"apple","ipa":"ˈæpl","zh":"苹果"},{"w":"child","ipa":"tʃaɪld","zh":"儿童"},{"w":"coral","ipa":"ˈkɔːrəl","zh":"珊瑚"},{"w":"title","ipa":"ˈtaɪtl","zh":"标题"},{"w":"bottle","ipa":"ˈbɑːtl","zh":"瓶子"},{"w":"noodle","ipa":"ˈnuːdl","zh":"面条"},{"w":"purple","ipa":"ˈpɜːrpl","zh":"紫色"},{"w":"school","ipa":"skuːl","zh":"学校"},{"w":"triangle","ipa":"ˈtraɪæŋɡl","zh":"三角形"}]},"m":{"sound":"m","words":[{"w":"me","ipa":"miː","zh":"我"},{"w":"man","ipa":"mæn","zh":"男子"},{"w":"map","ipa":"mæp","zh":"地图"},{"w":"mix","ipa":"mɪks","zh":"混合"},{"w":"mud","ipa":"mʌd","zh":"泥"},{"w":"game","ipa":"ɡeɪm","zh":"游戏"},{"w":"home","ipa":"hoʊm","zh":"家"},{"w":"mall","ipa":"mɔːl","zh":"购物中心"},{"w":"math","ipa":"mæθ","zh":"数学"},{"w":"meal","ipa":"miːl","zh":"膳食"},{"w":"meat","ipa":"miːt","zh":"肉"},{"w":"milk","ipa":"mɪlk","zh":"牛奶"},{"w":"room","ipa":"ruːm","zh":"房间"},{"w":"same","ipa":"seɪm","zh":"相同"},{"w":"alarm","ipa":"əˈlɑːrm","zh":"闹钟"},{"w":"mouth","ipa":"maʊθ","zh":"嘴巴"},{"w":"smart","ipa":"smɑːrt","zh":"聪明"}]},"n":{"sound":"n","words":[{"w":"new","ipa":"nuː","zh":"新"},{"w":"pen","ipa":"pen","zh":"钢笔"},{"w":"ten","ipa":"ten","zh":"十"},{"w":"bean","ipa":"biːn","zh":"豆角"},{"w":"down","ipa":"daʊn","zh":"下"},{"w":"lion","ipa":"ˈlaɪən","zh":"狮子"},{"w":"menu","ipa":"ˈmenjuː","zh":"菜单"},{"w":"near","ipa":"nɪr","zh":"近"},{"w":"need","ipa":"niːd","zh":"需要"},{"w":"nose","ipa":"noʊz","zh":"鼻子"},{"w":"rain","ipa":"reɪn","zh":"雨"},{"w":"sand","ipa":"sænd","zh":"沙子"},{"w":"green","ipa":"ɡriːn","zh":"绿色"},{"w":"paint","ipa":"peɪnt","zh":"绘画"},{"w":"panda","ipa":"ˈpændə","zh":"熊猫"},{"w":"spoon","ipa":"spuːn","zh":"勺"},{"w":"dragon","ipa":"ˈdræɡən","zh":"龙"}]},"o":{"sound":"ɑː","words":[{"w":"box","ipa":"bɑːks","zh":"盒子"},{"w":"dot","ipa":"dɑːt","zh":"点"},{"w":"fox","ipa":"fɑːks","zh":"狐狸"},{"w":"hot","ipa":"hɑːt","zh":"热"},{"w":"pot","ipa":"pɑːt","zh":"锅"},{"w":"body","ipa":"ˈbɑːdi","zh":"身体"},{"w":"doll","ipa":"dɑːl","zh":"玩偶"},{"w":"frog","ipa":"frɑːɡ","zh":"青蛙"},{"w":"pond","ipa":"pɑːnd","zh":"池塘"},{"w":"rock","ipa":"rɑːk","zh":"岩石"},{"w":"spot","ipa":"spɑːt","zh":"点"},{"w":"stop","ipa":"stɑːp","zh":"停止"},{"w":"block","ipa":"blɑːk","zh":"块"},{"w":"clock","ipa":"klɑːk","zh":"时钟"},{"w":"bottle","ipa":"ˈbɑːtl","zh":"瓶子"},{"w":"doctor","ipa":"ˈdɑːktər","zh":"医生"},{"w":"office","ipa":"ˈɑːfɪs","zh":"办公室"}]},"p":{"sound":"p","words":[{"w":"pen","ipa":"pen","zh":"钢笔"},{"w":"pet","ipa":"pet","zh":"宠物"},{"w":"pie","ipa":"paɪ","zh":"馅饼"},{"w":"pig","ipa":"pɪɡ","zh":"猪"},{"w":"park","ipa":"pɑːrk","zh":"公园"},{"w":"pear","ipa":"per","zh":"梨"},{"w":"pink","ipa":"pɪŋk","zh":"粉色"},{"w":"paint","ipa":"peɪnt","zh":"绘画"},{"w":"panda","ipa":"ˈpændə","zh":"熊猫"},{"w":"pizza","ipa":"ˈpiːtsə","zh":"披萨"},{"w":"plane","ipa":"pleɪn","zh":"飞机"},{"w":"puppy","ipa":"ˈpʌpi","zh":"小狗狗"},{"w":"parrot","ipa":"ˈpærət","zh":"鹦鹉"},{"w":"pencil","ipa":"ˈpensl","zh":"铅笔"},{"w":"pillow","ipa":"ˈpɪloʊ","zh":"枕头"},{"w":"police","ipa":"pəˈliːs","zh":"警察"},{"w":"purple","ipa":"ˈpɜːrpl","zh":"紫色"}]},"q":{"sound":"kw","words":[{"w":"quiz","ipa":"kwɪz","zh":"测验"},{"w":"queen","ipa":"kwiːn","zh":"女王"},{"w":"quick","ipa":"kwɪk","zh":"迅速"},{"w":"quiet","ipa":"ˈkwaɪət","zh":"安静"},{"w":"quilt","ipa":"kwɪlt","zh":"被子"},{"w":"quarter","ipa":"ˈkwɔːrtər","zh":"题"},{"w":"question","ipa":"ˈkwestʃən","zh":"问题"}]},"r":{"sound":"r","words":[{"w":"red","ipa":"red","zh":"红色"},{"w":"rug","ipa":"rʌɡ","zh":"地毯"},{"w":"crow","ipa":"kroʊ","zh":"乌鸦"},{"w":"free","ipa":"friː","zh":"自由"},{"w":"rain","ipa":"reɪn","zh":"雨"},{"w":"read","ipa":"riːd","zh":"读"},{"w":"rest","ipa":"rest","zh":"休息"},{"w":"ride","ipa":"raɪd","zh":"骑"},{"w":"ripe","ipa":"raɪp","zh":"成熟"},{"w":"road","ipa":"roʊd","zh":"路"},{"w":"rope","ipa":"roʊp","zh":"绳"},{"w":"rose","ipa":"roʊz","zh":"玫瑰"},{"w":"bread","ipa":"bred","zh":"面包"},{"w":"coral","ipa":"ˈkɔːrəl","zh":"珊瑚"},{"w":"orange","ipa":"ˈɔːrɪndʒ","zh":"橙色"}]},"s":{"sound":"s","words":[{"w":"sea","ipa":"siː","zh":"海"},{"w":"see","ipa":"siː","zh":"看到"},{"w":"sit","ipa":"sɪt","zh":"坐"},{"w":"six","ipa":"sɪks","zh":"六"},{"w":"desk","ipa":"desk","zh":"书桌"},{"w":"last","ipa":"læst","zh":"最后的"},{"w":"salt","ipa":"sɔːlt","zh":"盐"},{"w":"same","ipa":"seɪm","zh":"相同"},{"w":"sand","ipa":"sænd","zh":"沙子"},{"w":"seat","ipa":"siːt","zh":"座位"},{"w":"seed","ipa":"siːd","zh":"种子"},{"w":"sing","ipa":"sɪŋ","zh":"唱"},{"w":"snow","ipa":"snoʊ","zh":"雪"},{"w":"soap","ipa":"soʊp","zh":"肥皂"},{"w":"soft","ipa":"sɔːft","zh":"柔软的"},{"w":"soup","ipa":"suːp","zh":"汤"},{"w":"star","ipa":"stɑːr","zh":"星星"},{"w":"seven","ipa":"ˈsevn","zh":"七"},{"w":"small","ipa":"smɔːl","zh":"小"},{"w":"smart","ipa":"smɑːrt","zh":"聪明"},{"w":"snail","ipa":"sneɪl","zh":"蜗牛"},{"w":"sorry","ipa":"ˈsɑːri","zh":"抱歉"},{"w":"space","ipa":"speɪs","zh":"空间"},{"w":"spoon","ipa":"spuːn","zh":"勺"},{"w":"school","ipa":"skuːl","zh":"学校"}]},"t":{"sound":"t","words":[{"w":"cat","ipa":"kæt","zh":"猫"},{"w":"eat","ipa":"iːt","zh":"吃东西"},{"w":"hat","ipa":"hæt","zh":"帽子"},{"w":"hot","ipa":"hɑːt","zh":"热"},{"w":"out","ipa":"aʊt","zh":"出"},{"w":"pot","ipa":"pɑːt","zh":"锅"},{"w":"tea","ipa":"tiː","zh":"茶"},{"w":"ten","ipa":"ten","zh":"十"},{"w":"toy","ipa":"tɔɪ","zh":"玩具"},{"w":"meat","ipa":"miːt","zh":"肉"},{"w":"soft","ipa":"sɔːft","zh":"柔软的"},{"w":"talk","ipa":"tɔːk","zh":"谈论"},{"w":"tall","ipa":"tɔːl","zh":"高"},{"w":"table","ipa":"ˈteɪbl","zh":"桌子"},{"w":"white","ipa":"waɪt","zh":"白色"},{"w":"doctor","ipa":"ˈdɑːktər","zh":"医生"},{"w":"parrot","ipa":"ˈpærət","zh":"鹦鹉"}]},"u":{"sound":"ʌ","words":[{"w":"cub","ipa":"kʌb","zh":"幼兽"},{"w":"cup","ipa":"kʌp","zh":"杯子"},{"w":"fun","ipa":"fʌn","zh":"好玩"},{"w":"hug","ipa":"hʌɡ","zh":"拥抱"},{"w":"mud","ipa":"mʌd","zh":"泥"},{"w":"rug","ipa":"rʌɡ","zh":"地毯"},{"w":"run","ipa":"rʌn","zh":"跑"},{"w":"sun","ipa":"sʌn","zh":"太阳"},{"w":"club","ipa":"klʌb","zh":"俱乐部"},{"w":"duck","ipa":"dʌk","zh":"小鸭"},{"w":"luck","ipa":"lʌk","zh":"运气"},{"w":"ugly","ipa":"ˈʌɡli","zh":"丑陋"},{"w":"brush","ipa":"brʌʃ","zh":"刷牙"},{"w":"bunny","ipa":"ˈbʌni","zh":"小兔子"},{"w":"lunch","ipa":"lʌntʃ","zh":"午餐"},{"w":"puppy","ipa":"ˈpʌpi","zh":"小狗狗"},{"w":"supper","ipa":"ˈsʌpər","zh":"晚餐"}]},"v":{"sound":"v","words":[{"w":"van","ipa":"væn","zh":"货车"},{"w":"cave","ipa":"keɪv","zh":"洞穴"},{"w":"dive","ipa":"daɪv","zh":"潜水"},{"w":"give","ipa":"ɡɪv","zh":"送给"},{"w":"love","ipa":"lʌv","zh":"爱"},{"w":"over","ipa":"ˈoʊvər","zh":"翻越"},{"w":"above","ipa":"əˈbʌv","zh":"上面"},{"w":"drive","ipa":"draɪv","zh":"驾驶"},{"w":"fever","ipa":"ˈfiːvər","zh":"发热"},{"w":"glove","ipa":"ɡlʌv","zh":"手套"},{"w":"heavy","ipa":"ˈhevi","zh":"重"},{"w":"seven","ipa":"ˈsevn","zh":"七"},{"w":"visit","ipa":"ˈvɪzɪt","zh":"访问"},{"w":"voice","ipa":"vɔɪs","zh":"语音"},{"w":"eleven","ipa":"ɪˈlevən","zh":"十一"},{"w":"twelve","ipa":"twelv","zh":"十二"},{"w":"everyone","ipa":"ˈevriwʌn","zh":"每人"}]},"w":{"sound":"w","words":[{"w":"we","ipa":"wiː","zh":"我们"},{"w":"web","ipa":"web","zh":"网络"},{"w":"wet","ipa":"wet","zh":"湿"},{"w":"win","ipa":"wɪn","zh":"赢得"},{"w":"swim","ipa":"swɪm","zh":"游泳"},{"w":"wait","ipa":"weɪt","zh":"等待"},{"w":"walk","ipa":"wɔːk","zh":"步行"},{"w":"wash","ipa":"wɑːʃ","zh":"洗手"},{"w":"wear","ipa":"wer","zh":"穿"},{"w":"west","ipa":"west","zh":"西方"},{"w":"wolf","ipa":"wʊlf","zh":"狼"},{"w":"watch","ipa":"wɑːtʃ","zh":"看"},{"w":"water","ipa":"ˈwɔːtər","zh":"水"},{"w":"world","ipa":"wɜːrld","zh":"世界"},{"w":"subway","ipa":"ˈsʌbweɪ","zh":"地铁"},{"w":"worker","ipa":"ˈwɜːrkər","zh":"工人"},{"w":"sandwich","ipa":"ˈsænwɪtʃ","zh":"三明治"}]},"x":{"sound":"ks","words":[{"w":"ax","ipa":"æks","zh":"斧头"},{"w":"box","ipa":"bɑːks","zh":"盒子"},{"w":"fax","ipa":"fæks","zh":"传真"},{"w":"fix","ipa":"fɪks","zh":"维修"},{"w":"fox","ipa":"fɑːks","zh":"狐狸"},{"w":"mix","ipa":"mɪks","zh":"混合"},{"w":"six","ipa":"sɪks","zh":"六"},{"w":"taxi","ipa":"ˈtæksi","zh":"出租车"},{"w":"text","ipa":"tekst","zh":"文本"},{"w":"relax","ipa":"rɪˈlæks","zh":"放松"},{"w":"galaxy","ipa":"ˈɡæləksi","zh":"星系"},{"w":"oxygen","ipa":"ˈɑːksɪdʒən","zh":"氧"},{"w":"mailbox","ipa":"ˈmeɪlbɑːks","zh":"邮箱"},{"w":"textbook","ipa":"ˈtekstbʊk","zh":"教科书"}]},"y":{"sound":"j","words":[{"w":"you","ipa":"jə","zh":"您"},{"w":"yard","ipa":"jɑːrd","zh":"院子"},{"w":"year","ipa":"jɪr","zh":"年"},{"w":"yummy","ipa":"ˈjʌmi","zh":"好吃"},{"w":"canyon","ipa":"ˈkænjən","zh":"峡谷"},{"w":"lawyer","ipa":"ˈlɔːjər","zh":"律师"},{"w":"yellow","ipa":"ˈjeloʊ","zh":"黄色"},{"w":"yesterday","ipa":"ˈjestərdeɪ","zh":"昨天"}]},"z":{"sound":"z","words":[{"w":"zoo","ipa":"zuː","zh":"动物园"},{"w":"lazy","ipa":"ˈleɪzi","zh":"懒"},{"w":"zero","ipa":"ˈzɪroʊ","zh":"零"},{"w":"prize","ipa":"praɪz","zh":"奖"},{"w":"zebra","ipa":"ˈziːbrə","zh":"斑马"},{"w":"freeze","ipa":"friːz","zh":"冻结"},{"w":"lizard","ipa":"ˈlɪzərd","zh":"蜥蜴"},{"w":"magazine","ipa":"ˈmæɡəziːn","zh":"杂志"}]}};
+const LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
+const DAY_MS = 86400000, WEEK_DAYS = 7;
+let DB = loadDB();
+let S = curUser()?load():fresh();
+
+function loadDB(){
+  try{ return JSON.parse(localStorage.getItem('phonics_users_v2')) || {users:{},cur:null}; }
+  catch(e){ return {users:{},cur:null}; }
+}
+function saveDB(){ localStorage.setItem('phonics_users_v2', JSON.stringify(DB)); }
+function fresh(){ return {start: Date.now(), done: {}, stars: {}, quizWeeks: {}}; }
+function load(){
+  try{ return JSON.parse(localStorage.getItem('phonics_p_'+DB.cur)) || fresh(); }
+  catch(e){ return fresh(); }
+}
+function save(){ if(DB.cur){ DB.users[DB.cur]=true; saveDB(); localStorage.setItem('phonics_p_'+DB.cur, JSON.stringify(S)); } }
+function curUser(){ return DB.cur; }
+function listUsers(){ return Object.keys(DB.users); }
+function switchUser(name){
+  if(!name||!DB.users[name])return;
+  DB.cur=name; saveDB(); S=load(); renderAll();
+}
+function createUser(name){
+  name=(name||'').trim(); if(!name)return false;
+  if(!DB.users[name]){ DB.users[name]=true; }
+  DB.cur=name; saveDB(); S=fresh(); save(); renderAll();
+  return true;
+}
+function delUser(name){
+  if(!DB.users[name])return;
+  delete DB.users[name];
+  localStorage.removeItem('phonics_p_'+name);
+  if(DB.cur===name){ DB.cur=listUsers()[0]||null; S=DB.cur?load():fresh(); }
+  saveDB(); renderAll();
+}
+
+function dayIndex(){ return Math.floor((Date.now()-S.start)/DAY_MS); }
+function weekOf(d){ return Math.floor(d/WEEK_DAYS); }
+function letterOfDay(d){ return LETTERS[Math.min(d,25)]; }
+function isQuizDay(d){ return (d>0 && d%WEEK_DAYS===0); }
+function today(){ return dayIndex(); }
+
+function speak(t){
+  try{
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang='en-US'; u.rate=0.75;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+/* 真人发音：有道词典在线音频，失败时回退合成语音 */
+function playWord(word){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const a=new Audio('https://dict.youdao.com/dictvoice?type=2&audio='+encodeURIComponent(word));
+  let ok=false;
+  a.play().catch(()=>{});
+  a.addEventListener('error',()=>{ if(!ok){ ok=true; speak(word);} });
+  a.addEventListener('playing',()=>{ ok=true; });
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+function confetti(){
+  const em=['🎉','⭐','🎈','✨','🎊'];
+  for(let i=0;i<18;i++){
+    const s=document.createElement('div');
+    s.className='confetti'; s.textContent=em[i%em.length];
+    s.style.left=Math.random()*100+'vw';
+    s.style.animationDelay=(Math.random()*0.6)+'s';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),3200);
+  }
+}
+
+/* ---------- 今日 ---------- */
+function renderToday(){
+  const d=today(), L=letterOfDay(d), info=DATA[L];
+  document.getElementById('day-label').textContent=`第 ${Math.min(d+1,26)} 天 · Day ${Math.min(d+1,26)} / 26`;
+  document.getElementById('big-letter').textContent=L.toUpperCase();
+  document.getElementById('big-letter-lower').textContent=L;
+  document.getElementById('letter-sound').textContent=`发音 /${info.sound}/ · ${info.words.length} 个单词`;
+  const done=!!S.done[d];
+  document.getElementById('btn-start').style.display=done?'none':'block';
+  document.getElementById('learn-area').style.display='none';
+  document.getElementById('done-card').style.display=done?'block':'none';
+  document.getElementById('today-status').textContent=done?'今日已完成打卡 ✅':'点开听听每个单词怎么读吧';
+}
+document.getElementById('btn-start').addEventListener('click',()=>{
+  const d=today(), L=letterOfDay(d), info=DATA[L];
+  document.getElementById('learn-area').style.display='block';
+  document.getElementById('learn-title').textContent=`字母 ${L.toUpperCase()} 的单词（/${info.sound}/）`;
+  const list=document.getElementById('word-list');
+  list.innerHTML='';
+  info.words.forEach(w=>{
+    const row=document.createElement('div'); row.className='word-item';
+    row.innerHTML=`<div class="w-emoji">${'📖'}</div>
+      <div class="w-main"><div class="w-word">${w.w}</div>
+      <div class="w-ipa">/${w.ipa}/ <span class="w-zh">${w.zh}</span></div></div>
+      <button class="speak" title="听发音">🔊</button>
+      <button class="rec" title="跟读录音">🎤</button>
+      <button class="play-rec" style="display:none" title="听我的录音">▶</button>`;
+    row.querySelector('.speak').onclick=()=>playWord(w.w);
+    setupRecorder(row, w.w);
+    list.appendChild(row);
+  });
+  playWord(info.words[0].w);
+});
+document.getElementById('btn-finish').addEventListener('click',()=>{
+  const d=today();
+  S.done[d]=true; save();
+  confetti(); toast('打卡成功！+1 ⭐');
+  renderToday(); renderStats(); renderCal();
+});
+
+
+/* ---------- 录音跟读 ---------- */
+let recStream=null, recMedia=null, recActiveBtn=null;
+function setupRecorder(row, word){
+  const btn=row.querySelector('.rec'), play=row.querySelector('.play-rec');
+  let chunks=[], audio=null;
+  async function start(){
+    try{
+      if(recActiveBtn && recActiveBtn!==btn){ stopActive(); }
+      recStream=await navigator.mediaDevices.getUserMedia({audio:true});
+      recMedia=new MediaRecorder(recStream);
+      chunks=[];
+      recMedia.ondataavailable=e=>chunks.push(e.data);
+      recMedia.onstop=()=>{
+        audio=new Blob(chunks,{type:recMedia.mimeType||'audio/webm'});
+        recStream.getTracks().forEach(t=>t.stop()); recStream=null;
+        btn.classList.remove('recording'); btn.classList.add('has-rec'); btn.textContent='🎤';
+        play.style.display='inline-block';
+        recActiveBtn=null; toast('录音完成，点 ▶ 听自己的发音');
+      };
+      recMedia.start();
+      btn.classList.add('recording'); btn.textContent='⏹';
+      recActiveBtn={stop(){ if(recMedia&&recMedia.state!=='inactive')recMedia.stop(); }};
+      play.style.display='none';
+    }catch(e){ toast('无法访问麦克风，请检查权限'); }
+  }
+  function stopActive(){ if(recActiveBtn){recActiveBtn.stop(); recActiveBtn=null;} }
+  btn.onclick=()=>{
+    if(btn.classList.contains('recording')){ stopActive(); }
+    else{ playWord(word); setTimeout(start, 800); toast('先听发音，随后开始跟读…'); }
+  };
+  play.onclick=()=>{
+    if(!audio)return;
+    const a=new Audio(URL.createObjectURL(audio)); a.play();
+  };
+}
+
+/* ---------- 日历 ---------- */
+function renderCal(){
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+  const d=today();
+  for(let i=0;i<26;i++){
+    const cell=document.createElement('div');
+    cell.className='cal-cell'+(S.done[i]?' done':'')+(isQuizDay(i)?' week':'')+(i===Math.min(d,25)?' today':'');
+    const L=LETTERS[i];
+    cell.innerHTML=(isQuizDay(i)?'🧪':L.toUpperCase())+`<span class="zh">${S.done[i]?'✓':(isQuizDay(i)?'周测':'')}</span>`;
+    grid.appendChild(cell);
+  }
+}
+
+/* ---------- 周测 ---------- */
+let quiz=null;
+function renderQuiz(){
+  const d=today(), wk=weekOf(d);
+  const lock=document.getElementById('quiz-lock'), run=document.getElementById('quiz-run'), res=document.getElementById('quiz-result');
+  res.style.display='none';
+  const prevEnd = wk*WEEK_DAYS; // days completed this week: prevEnd-7 .. prevEnd-1
+  const learned=[];
+  for(let i=Math.max(0,prevEnd-WEEK_DAYS); i<prevEnd && i<26; i++){
+    if(S.done[i] && !isQuizDay(i)) learned.push(i);
+  }
+  if(learned.length<3){
+    lock.style.display='block'; run.style.display='none';
+    document.getElementById('quiz-lock-reason').textContent=`本周还需再学 ${3-learned.length} 个字母才能参加周测（先去"今日"打卡吧）`;
+    return;
+  }
+  if(S.quizWeeks[wk]){
+    // already taken: show result
+    const sc=S.quizWeeks[wk];
+    lock.style.display='none'; run.style.display='none'; res.style.display='block';
+    showScore(sc.correct, sc.total, wk, true);
+    return;
+  }
+  lock.style.display='none';
+  startQuiz(learned, wk);
+}
+function startQuiz(learned, wk){
+  // build 10 questions: meaning-choice from learned letters' words
+  const pool=[];
+  learned.forEach(i=>DATA[LETTERS[i]].words.forEach(w=>pool.push({...w,L:LETTERS[i]})));
+  shuffle(pool);
+  const qs=pool.slice(0,10);
+  quiz={qs, idx:0, correct:0, wk};
+  run.style.display='block';
+  showQ();
+}
+function showQ(){
+  const q=quiz.qs[quiz.idx];
+  document.getElementById('quiz-prog').style.width=(quiz.idx/quiz.qs.length*100)+'%';
+  document.getElementById('quiz-q').textContent=`第 ${quiz.idx+1}/${quiz.qs.length} 题 · 字母 ${q.L.toUpperCase()}`;
+  const wEl=document.getElementById('quiz-word');
+  wEl.textContent=q.w;
+  wEl.onclick=()=>playWord(q.w);
+  playWord(q.w);
+  // options: correct zh + 3 distractors
+  const all=Object.values(DATA).flatMap(x=>x.words);
+  const distr=[]; const used=new Set([q.zh]);
+  while(distr.length<3){
+    const c=all[Math.floor(Math.random()*all.length)].zh;
+    if(!used.has(c)){used.add(c);distr.push(c);}
+  }
+  const opts=shuffle([q.zh,...distr]);
+  const box=document.getElementById('quiz-opts'); box.innerHTML='';
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o;
+    b.onclick=()=>{
+      if(b.disabled)return;
+      if(o===q.zh){ b.classList.add('correct'); quiz.correct++; speak('good'); }
+      else{ b.classList.add('wrong'); playWord(q.w); toast(`正确答案：${q.zh}`); }
+      [...box.children].forEach(x=>x.disabled=true);
+      setTimeout(()=>{ quiz.idx++; quiz.idx<quiz.qs.length?showQ():endQuiz(); },900);
+    };
+    box.appendChild(b);
+  });
+}
+function endQuiz(){
+  document.getElementById('quiz-run').style.display='none';
+  showScore(quiz.correct, quiz.qs.length, quiz.wk, false);
+  S.quizWeeks[quiz.wk]={correct:quiz.correct,total:quiz.qs.length};
+  save(); renderStats();
+}
+function showScore(c,t,wk,already){
+  document.getElementById('quiz-result').style.display='block';
+  document.getElementById('quiz-score').textContent=`${c} / ${t}`;
+  const stars=c>=9?3:c>=7?2:c>=5?1:0;
+  S.stars[wk]=Math.max(S.stars[wk]||0,stars); save();
+  document.getElementById('quiz-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  const cm=['再接再厉，明天继续加油！','不错哦，接近满分啦！','太棒了，拼写小达人！','满分！你就是字母明星🌟'];
+  document.getElementById('quiz-comment').textContent=already?'本周已测，这是你的成绩':cm[stars];
+  const badges=document.getElementById('quiz-badges'); badges.innerHTML='';
+  const names={1:'🥉 拼读新手',2:'🥈 拼读高手',3:'🥇 拼读冠军'};
+  for(let w=0;w<=wk;w++) if(S.stars[w]) { const b=document.createElement('span'); b.className='badge'; b.textContent=names[S.stars[w]]||''; badges.appendChild(b); }
+  if(!already && stars>=2) confetti();
+}
+document.getElementById('btn-quiz-back').addEventListener('click',()=>{switchPage('today')});
+
+/* ---------- utils ---------- */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function renderStats(){
+  const done=Object.keys(S.done).filter(k=>!isQuizDay(+k)).length;
+  let streak=0, d=today();
+  while(S.done[d-streak]&&d-streak>=0)streak++;
+  document.getElementById('st-done').textContent=done;
+  document.getElementById('st-streak').textContent=streak;
+  let wc=0; for(const k in S.done){ if(!isQuizDay(+k)) wc+=DATA[LETTERS[Math.min(+k,25)]].words.length; }
+  document.getElementById('st-words').textContent=wc;
+  let st=0; for(const k in S.stars) st+=S.stars[k];
+  document.getElementById('st-stars').textContent='⭐'+st;
+}
+function switchPage(p){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('show',x.id==='p-'+p));
+  if(p==='cal')renderCal();
+  if(p==='quiz')renderQuiz();
+  if(p==='today')renderToday();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>switchPage(b.dataset.p));
+
+/* ---------- 多用户 ---------- */
+function renderUserBar(){
+  const sel=document.getElementById('user-select');
+  sel.innerHTML='';
+  listUsers().forEach(n=>{
+    const o=document.createElement('option'); o.value=n; o.textContent='👤 '+n;
+    if(n===DB.cur)o.selected=true; sel.appendChild(o);
+  });
+  if(!DB.cur){ const o=document.createElement('option'); o.textContent='未选择用户'; sel.appendChild(o); }
+}
+function renderGate(){
+  const gate=document.getElementById('user-gate');
+  if(DB.cur){ gate.style.display='none'; return; }
+  gate.style.display='flex';
+  const l=document.getElementById('gate-list'); l.innerHTML='';
+  listUsers().forEach(n=>{
+    const b=document.createElement('button');
+    b.style.cssText='border:2px solid var(--main);background:#fff3e8;border-radius:12px;padding:12px;font-size:16px;font-weight:700;color:var(--main-d)';
+    b.textContent='👤 '+n;
+    b.onclick=()=>switchUser(n);
+    l.appendChild(b);
+  });
+}
+document.getElementById('user-select').onchange=e=>switchUser(e.target.value);
+document.getElementById('btn-add-user').onclick=()=>{
+  const n=prompt('输入新用户名字：');
+  if(n && createUser(n)) toast('已创建用户：'+n.trim());
+};
+document.getElementById('btn-del-user').onclick=()=>{
+  if(!DB.cur){toast('请先选择用户');return;}
+  if(confirm('确定删除用户「'+DB.cur+'」的全部学习记录？此操作不可恢复。')){ const n=DB.cur; delUser(n); toast('已删除'); }
+};
+document.getElementById('gate-create').onclick=()=>{
+  const v=document.getElementById('gate-name').value;
+  if(v && createUser(v)){ toast('欢迎，'+v.trim()+'！'); }
+  else toast('请输入名字');
+};
+function renderAll(){
+  renderUserBar(); renderGate(); renderToday(); renderStats(); renderCal();
+}
+renderAll();
+
+/* ---------- 离线缓存注册 ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
